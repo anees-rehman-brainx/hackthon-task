@@ -1,4 +1,5 @@
-import { createChatJsonCompletion } from "./openai.client.js";
+import { Injectable } from "@nestjs/common";
+import { OpenaiService } from "./openai.service";
 
 const ANALYZE_SYSTEM = `You are a senior engineer reviewing a client brief before implementation.
 
@@ -70,7 +71,15 @@ Return ONE JSON object (no markdown):
   "unresolvedGaps": string[]
 }`;
 
-function normalizeClarifications(clarifications) {
+type ClarificationInput = {
+  questionId?: string;
+  question?: string;
+  answer?: string;
+};
+
+function normalizeClarifications(
+  clarifications: ClarificationInput[],
+): { question: string; answer: string }[] {
   if (!Array.isArray(clarifications)) return [];
   return clarifications
     .map((c) => ({
@@ -86,30 +95,40 @@ function normalizeClarifications(clarifications) {
     }));
 }
 
-export async function analyzeBrief(brief) {
-  const user = `CLIENT BRIEF:\n\n${brief}`;
-  return createChatJsonCompletion({
-    system: ANALYZE_SYSTEM,
-    user,
-    meta: { phase: "analyze" },
-  });
-}
+@Injectable()
+export class BriefService {
+  constructor(private readonly openai: OpenaiService) {}
 
-export async function finalizeBrief(brief, clarifications) {
-  const pairs = normalizeClarifications(clarifications);
-  const user = [
-    "ORIGINAL CLIENT BRIEF:",
-    brief,
-    "",
-    "ENGINEERING CLARIFICATIONS (question → answer):",
-    pairs.length
-      ? pairs.map((p, i) => `${i + 1}. Q: ${p.question}\n   A: ${p.answer}`).join("\n\n")
-      : "(none — infer technical tasks from the brief; use unresolvedGaps if you must not guess.)",
-  ].join("\n");
+  async analyzeBrief(brief: string): Promise<Record<string, unknown>> {
+    const user = `CLIENT BRIEF:\n\n${brief}`;
+    return this.openai.createChatJsonCompletion({
+      system: ANALYZE_SYSTEM,
+      user,
+      meta: { phase: "analyze" },
+    });
+  }
 
-  return createChatJsonCompletion({
-    system: FINALIZE_SYSTEM,
-    user,
-    meta: { phase: "finalize" },
-  });
+  async finalizeBrief(
+    brief: string,
+    clarifications: ClarificationInput[],
+  ): Promise<Record<string, unknown>> {
+    const pairs = normalizeClarifications(clarifications);
+    const user = [
+      "ORIGINAL CLIENT BRIEF:",
+      brief,
+      "",
+      "ENGINEERING CLARIFICATIONS (question → answer):",
+      pairs.length
+        ? pairs
+            .map((p, i) => `${i + 1}. Q: ${p.question}\n   A: ${p.answer}`)
+            .join("\n\n")
+        : "(none — infer technical tasks from the brief; use unresolvedGaps if you must not guess.)",
+    ].join("\n");
+
+    return this.openai.createChatJsonCompletion({
+      system: FINALIZE_SYSTEM,
+      user,
+      meta: { phase: "finalize" },
+    });
+  }
 }
