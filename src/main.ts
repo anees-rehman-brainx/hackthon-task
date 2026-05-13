@@ -23,14 +23,9 @@ async function bootstrap() {
 
   await app.listen(port);
   const nodeEnv = configService.get<string>("NODE_ENV") || "development";
-  const openaiKey = configService.get<string>("OPENAI_API_KEY")?.trim();
-  const openaiModel =
-    configService.get<string>("OPENAI_MODEL")?.trim() || "gpt-4.1-preview";
   console.log("[server] listening", {
     url: `http://localhost:${port}`,
     nodeEnv,
-    openaiModel,
-    openaiConfigured: Boolean(openaiKey),
   });
 }
 

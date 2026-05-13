@@ -1,7 +1,7 @@
 {
   "name": "hackathon-task",
   "version": "1.0.0",
-  "description": "NestJS API server",
+  "description": "NestJS hackathon API starter",
   "scripts": {
     "build": "nest build",
     "prestart": "npm run build",
@@ -18,7 +18,6 @@
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
-    "openai": "^6.34.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
