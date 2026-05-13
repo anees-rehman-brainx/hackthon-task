@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import { json } from "express";
+import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { NestExpressApplication } from "@nestjs/platform-express";
 import { ConfigService } from "@nestjs/config";
@@ -10,6 +11,15 @@ async function bootstrap() {
     bodyParser: false,
   });
   app.use(json({ limit: "1mb" }));
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
 
   const configService = app.get(ConfigService);
   const corsOrigin = configService.get<string>("CORS_ORIGIN")?.trim();
@@ -22,16 +32,6 @@ async function bootstrap() {
   const port = Number.isFinite(parsed) && parsed > 0 ? parsed : 5000;
 
   await app.listen(port);
-  const nodeEnv = configService.get<string>("NODE_ENV") || "development";
-  const openaiKey = configService.get<string>("OPENAI_API_KEY")?.trim();
-  const openaiModel =
-    configService.get<string>("OPENAI_MODEL")?.trim() || "gpt-4.1-preview";
-  console.log("[server] listening", {
-    url: `http://localhost:${port}`,
-    nodeEnv,
-    openaiModel,
-    openaiConfigured: Boolean(openaiKey),
-  });
 }
 
 bootstrap();

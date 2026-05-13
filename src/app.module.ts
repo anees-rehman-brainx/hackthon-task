@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { join } from "node:path";
 import { AppController } from "./app.controller";
+import { BriefTicketsModule } from "./brief-tickets/brief-tickets.module";
 import { OpenaiModule } from "./openai/openai.module";
 
 @Module({
@@ -13,6 +14,7 @@ import { OpenaiModule } from "./openai/openai.module";
         join(__dirname, "..", ".env"),
     }),
     OpenaiModule,
+    BriefTicketsModule,
   ],
   controllers: [AppController],
 })
